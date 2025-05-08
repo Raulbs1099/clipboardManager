@@ -1,0 +1,32 @@
+{
+  "name": "clipboard-app",
+  "version": "1.0.0",
+  "description": "Aplicación de escritorio para historial de portapapeles",
+  "main": "main.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "electron .",
+    "stop": "pgrep -f 'electron .' && pkill -f 'electron .' || echo 'No hay proceso Electron activo.'",
+    "dist": "electron-builder"
+  },
+  "dependencies": {
+    "electron": "^26.2.4",
+    "clipboardy": "^4.0.0"
+  },
+  "devDependencies": {
+    "electron-builder": "^24.6.4"
+  },
+  "build": {
+    "appId": "com.example.clipboardapp",
+    "productName": "Clipboard History",
+    "mac": {
+      "target": "dmg"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  }
+}
