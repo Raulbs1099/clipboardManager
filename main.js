@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, clipboard, globalShortcut, Tray, Menu } = require('electron');
+const { app, BrowserWindow, ipcMain, clipboard, globalShortcut, Tray, Menu, screen } = require('electron');
 const path = require('path');
 
 async function loadClipboardy() {
@@ -27,17 +27,45 @@ function createWindow() {
 
     win.on('ready-to-show', () => {
         win.setAlwaysOnTop(true, 'pop-up');
-        win.center();
+        // Posicionar la ventana a la derecha del cursor
+        const cursorPoint = screen.getCursorScreenPoint();
+        const currentDisplay = screen.getDisplayNearestPoint(cursorPoint);
+        const { width, height } = win.getBounds();
+        const displayBounds = currentDisplay.workArea;
+
+        // Calcular la posición (a la derecha del cursor, con un margen)
+        let x = cursorPoint.x + 10; // 10px a la derecha del cursor
+        let y = cursorPoint.y;
+
+        // Asegurarse de que la ventana no se salga de la pantalla
+        if (x + width > displayBounds.x + displayBounds.width) {
+            x = displayBounds.x + displayBounds.width - width;
+        }
+        if (y + height > displayBounds.y + displayBounds.height) {
+            y = displayBounds.y + displayBounds.height - height;
+        }
+        if (x < displayBounds.x) x = displayBounds.x;
+        if (y < displayBounds.y) y = displayBounds.y;
+
+        win.setPosition(x, y);
     });
 
     win.on('closed', () => {
         win = null;
     });
 
+    // Ocultar de la barra de tareas en Windows
+    if (process.platform === 'win32') {
+        win.setSkipTaskbar(true);
+    }
+
     return win;
 }
 
-app.setActivationPolicy('accessory'); // Ejecutar como agente, sin ícono en el Dock
+// Ejecutar como agente solo en macOS
+if (process.platform === 'darwin') {
+    app.setActivationPolicy('accessory');
+}
 
 app.whenReady().then(async () => {
     win = createWindow();
@@ -57,6 +85,25 @@ app.whenReady().then(async () => {
                 label: 'Mostrar Historial',
                 click: () => {
                     if (!win) win = createWindow();
+                    // Reposicionar al abrir desde la bandeja
+                    const cursorPoint = screen.getCursorScreenPoint();
+                    const currentDisplay = screen.getDisplayNearestPoint(cursorPoint);
+                    const { width, height } = win.getBounds();
+                    const displayBounds = currentDisplay.workArea;
+
+                    let x = cursorPoint.x + 10;
+                    let y = cursorPoint.y;
+
+                    if (x + width > displayBounds.x + displayBounds.width) {
+                        x = displayBounds.x + displayBounds.width - width;
+                    }
+                    if (y + height > displayBounds.y + displayBounds.height) {
+                        y = displayBounds.y + displayBounds.height - height;
+                    }
+                    if (x < displayBounds.x) x = displayBounds.x;
+                    if (y < displayBounds.y) y = displayBounds.y;
+
+                    win.setPosition(x, y);
                     win.show();
                     win.focus();
                 }
@@ -69,13 +116,32 @@ app.whenReady().then(async () => {
         console.error('Error al crear la bandeja del sistema:', err);
     }
 
-    // Registrar atajo global Command + Shift + V
+    // Registrar atajo global CommandOrControl + Shift + V
     const shortcut = 'CommandOrControl+Shift+V';
     const registered = globalShortcut.register(shortcut, () => {
         if (!win) win = createWindow();
         if (win.isVisible()) {
             win.hide();
         } else {
+            // Reposicionar al abrir con el atajo
+            const cursorPoint = screen.getCursorScreenPoint();
+            const currentDisplay = screen.getDisplayNearestPoint(cursorPoint);
+            const { width, height } = win.getBounds();
+            const displayBounds = currentDisplay.workArea;
+
+            let x = cursorPoint.x + 10;
+            let y = cursorPoint.y;
+
+            if (x + width > displayBounds.x + displayBounds.width) {
+                x = displayBounds.x + displayBounds.width - width;
+            }
+            if (y + height > displayBounds.y + displayBounds.height) {
+                y = displayBounds.y + displayBounds.height - height;
+            }
+            if (x < displayBounds.x) x = displayBounds.x;
+            if (y < displayBounds.y) y = displayBounds.y;
+
+            win.setPosition(x, y);
             win.show();
             win.focus();
         }
